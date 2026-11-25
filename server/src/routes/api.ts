@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { storage } from '../services/storageService.js';
 import { youtubeService } from '../services/youtubeService.js';
 import { nemotronService } from '../services/nemotronService.js';
+import { groqService } from '../services/groqService.js';
 import { INote, IQuizAttempt } from '../models/types.js';
 
 export const apiRouter = Router();
@@ -102,10 +103,12 @@ apiRouter.post('/courses/generate', async (req: Request, res: Response) => {
     );
     console.log(`✓ Extracted transcript with ${transcript.segments.length} timestamped segments.`);
 
-    const { course, quizzes, generatorModel, isDemoMode } = await nemotronService.generateCourseFromTranscript(
-      videoMetadata,
-      transcript.rawText
-    );
+    const isGroqActive = groqService.getStatus().active;
+    const aiResult = isGroqActive
+      ? await groqService.generateCourseFromTranscript(videoMetadata, transcript.rawText)
+      : await nemotronService.generateCourseFromTranscript(videoMetadata, transcript.rawText);
+
+    const { course, quizzes, generatorModel, isDemoMode } = aiResult;
 
     await storage.saveCourse(course);
 
@@ -484,16 +487,32 @@ apiRouter.get('/dashboard', async (_req: Request, res: Response) => {
 });
 
 apiRouter.get('/settings/ai', (_req: Request, res: Response) => {
+  const groqStatus = groqService.getStatus();
+  if (groqStatus.active) {
+    return res.json({
+      hasKey: true,
+      maskedKey: groqStatus.maskedKey,
+      model: groqStatus.model,
+      provider: 'Groq Cloud LPU (Active)'
+    });
+  }
   res.json(nemotronService.getApiKeyStatus());
 });
 
 apiRouter.post('/settings/ai', (req: Request, res: Response) => {
   const { apiKey } = req.body;
   if (typeof apiKey === 'string') {
-    nemotronService.setApiKey(apiKey.trim());
+    const trimmed = apiKey.trim();
+    if (trimmed.startsWith('gsk_')) {
+      groqService.setApiKey(trimmed);
+    }
+    nemotronService.setApiKey(trimmed);
   }
+  const groqStatus = groqService.getStatus();
   res.json({
     success: true,
-    status: nemotronService.getApiKeyStatus()
+    status: groqStatus.active
+      ? { hasKey: true, maskedKey: groqStatus.maskedKey, model: groqStatus.model, provider: 'Groq Cloud LPU' }
+      : nemotronService.getApiKeyStatus()
   });
 });

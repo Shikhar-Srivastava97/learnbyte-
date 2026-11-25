@@ -23,11 +23,11 @@ export const Footer: React.FC = () => {
             </div>
 
             <a 
-              href="mailto:contact@learnbyte.ai" 
+              href="mailto:Shikhar281204@gmail.com" 
               className="inline-flex items-center space-x-2 text-sm font-mono text-[#F1F0E9]/80 hover:text-[#FFD21C] transition-colors"
             >
               <Mail className="w-4 h-4 text-[#FFD21C]" />
-              <span>contact@learnbyte.ai</span>
+              <span>Shikhar281204@gmail.com</span>
             </a>
 
             <p className="mt-3 text-xs font-mono text-[#F1F0E9]/60 max-w-sm">

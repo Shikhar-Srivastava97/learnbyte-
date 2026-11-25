@@ -31,6 +31,7 @@ export class GroqService {
   }
 
   public getStatus() {
+    if (!this.groqClient) this.initClient();
     const hasKey = !!this.groqClient;
     const key = process.env.GROQ_API_KEY || process.env.AI_API_KEY || '';
     return {
@@ -45,6 +46,7 @@ export class GroqService {
     videoInfo: YouTubeVideoInfo,
     transcriptText: string
   ): Promise<{ course: ICourse; quizzes: IQuiz[]; generatorModel: string; isDemoMode: boolean }> {
+    if (!this.groqClient) this.initClient();
     if (this.groqClient) {
       try {
         console.log(`🚀 Dispatching transcript to Groq SDK (${this.defaultModel})...`);

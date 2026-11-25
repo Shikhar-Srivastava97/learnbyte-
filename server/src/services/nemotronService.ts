@@ -14,21 +14,62 @@ export class NemotronService {
   private defaultModel: string = 'nvidia/nemotron-4-340b-instruct';
 
   constructor() {
-    this.apiKey = process.env.NVIDIA_API_KEY || null;
+    this.apiKey = process.env.NVIDIA_API_KEY || process.env.AI_API_KEY || null;
     if (process.env.NVIDIA_MODEL) {
       this.defaultModel = process.env.NVIDIA_MODEL;
+    } else if (process.env.AI_MODEL) {
+      this.defaultModel = process.env.AI_MODEL;
+    }
+    if (process.env.AI_ENDPOINT) {
+      this.apiEndpoint = process.env.AI_ENDPOINT;
+    } else if (this.apiKey) {
+      this.autoDetectProvider(this.apiKey);
     }
   }
 
-  public setApiKey(key: string) {
-    this.apiKey = key;
+  private autoDetectProvider(key: string) {
+    const trimmed = key.trim();
+    if (trimmed.startsWith('gsk_')) {
+      this.apiEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
+      this.defaultModel = 'llama-3.3-70b-versatile';
+    } else if (trimmed.startsWith('AIzaSy')) {
+      this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+      this.defaultModel = 'gemini-1.5-flash';
+    } else if (trimmed.startsWith('sk-or-')) {
+      this.apiEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
+      this.defaultModel = 'meta-llama/llama-3.3-70b-instruct:free';
+    } else {
+      this.apiEndpoint = 'https://integrate.api.nvidia.com/v1/chat/completions';
+      this.defaultModel = 'nvidia/nemotron-4-340b-instruct';
+    }
   }
 
-  public getApiKeyStatus(): { hasKey: boolean; maskedKey: string | null; model: string } {
+  public setApiKey(key: string, customModel?: string, customEndpoint?: string) {
+    this.apiKey = key.trim();
+    if (customEndpoint) {
+      this.apiEndpoint = customEndpoint;
+    } else {
+      this.autoDetectProvider(this.apiKey);
+    }
+    if (customModel) {
+      this.defaultModel = customModel;
+    }
+  }
+
+  public getApiKeyStatus(): { hasKey: boolean; maskedKey: string | null; model: string; provider: string } {
+    let provider = 'Nemotron Simulation Engine (Built-in)';
+    if (this.apiKey) {
+      if (this.apiEndpoint.includes('groq')) provider = 'Groq Cloud (Free Llama 3.3 70B)';
+      else if (this.apiEndpoint.includes('googleapis')) provider = 'Google Gemini (Free AI Studio)';
+      else if (this.apiEndpoint.includes('openrouter')) provider = 'OpenRouter (Free Tier)';
+      else provider = 'NVIDIA NIM Nemotron';
+    }
+
     return {
       hasKey: !!this.apiKey,
-      maskedKey: this.apiKey ? `${this.apiKey.substring(0, 7)}...${this.apiKey.substring(this.apiKey.length - 4)}` : null,
-      model: this.defaultModel
+      maskedKey: this.apiKey ? `${this.apiKey.substring(0, 6)}...${this.apiKey.substring(this.apiKey.length - 4)}` : null,
+      model: this.defaultModel,
+      provider
     };
   }
 
@@ -36,11 +77,11 @@ export class NemotronService {
     videoInfo: YouTubeVideoInfo,
     transcriptText: string
   ): Promise<NemotronCourseGenerationResult> {
-    const hasKey = !!this.apiKey && this.apiKey.trim().length > 10;
+    const hasKey = !!this.apiKey && this.apiKey.trim().length > 8;
 
     if (hasKey) {
       try {
-        console.log(`🤖 Invoking live NVIDIA Nemotron API (${this.defaultModel})...`);
+        console.log(`🤖 Invoking live AI Provider at ${this.apiEndpoint} (${this.defaultModel})...`);
         const result = await this.callNemotronAPI(videoInfo, transcriptText);
         return {
           ...result,
@@ -48,7 +89,7 @@ export class NemotronService {
           isDemoMode: false
         };
       } catch (err: any) {
-        console.warn(`⚠️ Nemotron API invocation failed (${err.message}). Falling back to integration simulator engine.`);
+        console.warn(`⚠️ Live AI API invocation failed (${err.message}). Falling back to simulation engine.`);
       }
     }
 
@@ -65,7 +106,7 @@ export class NemotronService {
     videoInfo: YouTubeVideoInfo,
     transcriptText: string
   ): Promise<{ course: ICourse; quizzes: IQuiz[] }> {
-    const prompt = `You are NVIDIA Nemotron, an expert curriculum architect. Analyze the educational YouTube video titled "${videoInfo.title}" with a total duration of ${videoInfo.durationSeconds} seconds (${videoInfo.durationFormatted}).
+    const prompt = `You are an expert curriculum architect. Analyze the educational YouTube video titled "${videoInfo.title}" with a total duration of ${videoInfo.durationSeconds} seconds (${videoInfo.durationFormatted}).
 Here is a sample of the video transcript:
 """
 ${transcriptText.substring(0, 3500)}
@@ -128,18 +169,18 @@ Respond ONLY with a valid JSON object strictly matching this schema:
           { role: 'user', content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 3000
+        max_tokens: 3500
       })
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`NVIDIA API HTTP ${response.status}: ${errText}`);
+      throw new Error(`AI Provider HTTP ${response.status}: ${errText}`);
     }
 
     const jsonRes = await response.json() as any;
     const content = jsonRes.choices?.[0]?.message?.content || '{}';
-
+    
     const cleanedJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleanedJson);
 
@@ -197,8 +238,9 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       tags: [category, 'Nemotron-AI', 'Hands-On', 'Comprehensive'],
       learningObjectives,
       modules,
-      generatorModel: 'nvidia/nemotron-4-340b-instruct',
+      generatorModel: this.defaultModel,
       isDemo: true,
+      isUserPasted: true,
       enrolled: true,
       progressPercent: 0,
       createdAt: new Date(),
@@ -291,7 +333,7 @@ Respond ONLY with a valid JSON object strictly matching this schema:
     };
 
     const blueprint = curriculumBlueprints[category] || curriculumBlueprints['DevOps'];
-
+    
     let totalLessonCount = 0;
     blueprint.forEach(m => totalLessonCount += m.lessons.length);
     const lessonDuration = Math.floor(totalSeconds / totalLessonCount);
@@ -480,11 +522,12 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       totalDuration: videoInfo.durationFormatted,
       totalDurationSeconds: videoInfo.durationSeconds,
       difficulty: parsed.difficulty || 'Intermediate',
-      tags: parsed.tags || ['Nemotron', 'AI-Generated'],
+      tags: parsed.tags || ['AI-Generated', 'Hands-On'],
       learningObjectives: parsed.learningObjectives || [],
       modules,
       generatorModel: this.defaultModel,
       isDemo: false,
+      isUserPasted: true,
       enrolled: true,
       progressPercent: 0,
       createdAt: new Date(),

@@ -103,7 +103,7 @@ export const ProfilePage: React.FC = () => {
         <div className="flex items-center space-x-2 pb-3 mb-4 border-b-2 border-[#101014]">
           <Cpu className="w-6 h-6 text-[#A77AF5]" />
           <h2 className="font-heading text-xl font-black uppercase text-[#101014]">
-            NVIDIA NEMOTRON AI INTEGRATION
+            AI INFERENCE ENGINE & API SETTINGS
           </h2>
         </div>
         <div className="p-4 bg-[#F1F0E9] border-2 border-[#101014] mb-6 flex items-start space-x-3">
@@ -119,22 +119,53 @@ export const ProfilePage: React.FC = () => {
             </div>
             <p className="text-[#101014]/80">
               {aiSettings.hasKey
-                ? `Custom NVIDIA NIM API Key connected: ${aiSettings.maskedKey}`
-                : 'Using Built-in High-Performance Curriculum Synthesizer Engine (Demo Mode Ready). You can optionally provide an NVIDIA NIM API Key below.'}
+                ? `Connected API Key: ${aiSettings.maskedKey}`
+                : 'Using Built-in High-Performance Curriculum Synthesizer Engine (Free & Instant). You can also plug in any free API key below.'}
             </p>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+          <a
+            href="https://console.groq.com/keys"
+            target="_blank"
+            rel="noreferrer"
+            className="p-2.5 bg-white border border-[#101014] text-xs font-mono hover:bg-[#FFD21C] transition-colors block"
+          >
+            <div className="font-bold text-[#101014]">1. Groq (100% Free)</div>
+            <div className="text-[10px] text-[#101014]/70">Fastest Llama 3.3 70B • console.groq.com</div>
+          </a>
+          <a
+            href="https://aistudio.google.com/app/apikey"
+            target="_blank"
+            rel="noreferrer"
+            className="p-2.5 bg-white border border-[#101014] text-xs font-mono hover:bg-[#48B7EC] transition-colors block"
+          >
+            <div className="font-bold text-[#101014]">2. Google Gemini</div>
+            <div className="text-[10px] text-[#101014]/70">Free AI Studio Key • aistudio.google.com</div>
+          </a>
+          <a
+            href="https://build.nvidia.com"
+            target="_blank"
+            rel="noreferrer"
+            className="p-2.5 bg-white border border-[#101014] text-xs font-mono hover:bg-[#35D68B] transition-colors block"
+          >
+            <div className="font-bold text-[#101014]">3. NVIDIA NIM</div>
+            <div className="text-[10px] text-[#101014]/70">1,000 Free Credits • build.nvidia.com</div>
+          </a>
+        </div>
+
         <form onSubmit={handleSaveApiKey} className="space-y-4">
           <div>
             <label className="block text-xs font-mono font-bold text-[#101014] uppercase mb-1.5">
-              NVIDIA NIM API KEY (OPTIONAL):
+              API KEY (OPTIONAL — GROQ, GEMINI, NEMOTRON, OPENROUTER):
             </label>
             <div className="flex gap-2">
               <input
                 type="password"
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="nvapi-..."
+                placeholder="Paste key: gsk_... (Groq) or AIzaSy... (Gemini) or nvapi-..."
                 className="flex-1 bg-[#F1F0E9] border-2 border-[#101014] px-4 py-2.5 font-mono text-sm text-[#101014] focus:outline-none focus:bg-white"
               />
               <button
@@ -146,7 +177,7 @@ export const ProfilePage: React.FC = () => {
               </button>
             </div>
             <p className="text-[11px] font-mono text-[#101014]/60 mt-1.5">
-              Keys are stored securely in backend server environment memory and are never exposed to browser clients.
+              Automatically detects key provider. Stored safely in backend memory only.
             </p>
           </div>
 

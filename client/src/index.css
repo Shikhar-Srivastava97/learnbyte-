@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #F1F0E9;
+  --black-color: #101014;
+  --purple-color: #A77AF5;
+  --red-color: #F34D43;
+  --blue-color: #48B7EC;
+  --green-color: #35D68B;
+  --pink-color: #F27CB5;
+  --yellow-color: #FFD21C;
+  --white-color: #FFFFFF;
+}
+
+body {
+  background-color: #F1F0E9;
+  color: #101014;
+  font-family: 'Inter', sans-serif;
+  background-image: 
+    linear-gradient(to right, rgba(16, 16, 20, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 16, 20, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.font-mono-meta {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
+}
+
+.bg-halftone {
+  background-image: radial-gradient(rgba(16, 16, 20, 0.18) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+
+.bg-halftone-white {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.3) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+
+.arcade-ribbon {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #FFD21C 0,
+    #FFD21C 12px,
+    #101014 12px,
+    #101014 24px
+  );
+  height: 6px;
+}
+
+.arcade-ribbon-subtle {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #101014 0,
+    #101014 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  height: 4px;
+}
+
+.neo-box {
+  background-color: #FFFFFF;
+  border: 2px solid #101014;
+  box-shadow: 4px 4px 0px 0px #101014;
+}
+
+.neo-box-thick {
+  background-color: #FFFFFF;
+  border: 3px solid #101014;
+  box-shadow: 6px 6px 0px 0px #101014;
+}
+
+.neo-box-sm {
+  background-color: #FFFFFF;
+  border: 2px solid #101014;
+  box-shadow: 2px 2px 0px 0px #101014;
+}
+
+.neo-button {
+  background-color: #FFD21C;
+  color: #101014;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  border: 2px solid #101014;
+  box-shadow: 3px 3px 0px 0px #101014;
+  transition: all 0.1s ease-in-out;
+}
+
+.neo-button:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px #101014;
+}
+
+.neo-button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #101014;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F0E9;
+  border-left: 2px solid #101014;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #101014;
+  border: 1px solid #FFD21C;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A77AF5;
+}

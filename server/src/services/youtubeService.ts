@@ -1,5 +1,44 @@
 import { ITranscript, ITranscriptSegment } from '../models/types.js';
 
+function extractDurationSeconds(videoPage: string): number | null {
+  const numericPatterns = [
+    /"lengthSeconds"\s*:\s*"?(\d+)"?/,
+    /\\"lengthSeconds\\"\s*:\s*\\"(\d+)\\"/,
+    /"approxDurationMs"\s*:\s*"?(\d+)"?/,
+    /\\"approxDurationMs\\"\s*:\s*\\"(\d+)\\"/
+  ];
+
+  for (const pattern of numericPatterns) {
+    const match = videoPage.match(pattern);
+    if (match) {
+      const duration = Number(match[1]);
+      const durationSeconds = pattern.source.includes('approxDurationMs')
+        ? Math.round(duration / 1000)
+        : duration;
+      if (Number.isSafeInteger(durationSeconds) && durationSeconds > 0) {
+        return durationSeconds;
+      }
+    }
+  }
+
+  const isoDurationPattern = /P(?:(\d+(?:\.\d+)?)D)?T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?/g;
+  for (const match of videoPage.matchAll(isoDurationPattern)) {
+    if (!match[0].includes('T')) continue;
+    const [, days, hours, minutes, seconds] = match;
+    const durationSeconds = Math.round(
+      Number(days || 0) * 86400 +
+      Number(hours || 0) * 3600 +
+      Number(minutes || 0) * 60 +
+      Number(seconds || 0)
+    );
+    if (Number.isSafeInteger(durationSeconds) && durationSeconds > 0) {
+      return durationSeconds;
+    }
+  }
+
+  return null;
+}
+
 export interface YouTubeVideoInfo {
   videoId: string;
   isPlaylist: boolean;
@@ -89,17 +128,25 @@ export class YouTubeService {
       console.warn('oEmbed fetch error, using generated metadata:', err);
     }
 
-    const videoPageResponse = await fetch(effectiveUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    });
+    const requestOptions = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept-Language': 'en-US,en;q=0.9'
+      }
+    };
+    const videoPageResponse = await fetch(effectiveUrl, requestOptions);
     if (!videoPageResponse.ok) {
       throw new Error(`Could not retrieve YouTube video details (HTTP ${videoPageResponse.status}).`);
     }
 
-    const videoPage = await videoPageResponse.text();
-    const durationMatch = videoPage.match(/"lengthSeconds"\s*:\s*"?(\d+)"?/);
-    const durationSeconds = durationMatch ? Number(durationMatch[1]) : 0;
-    if (!Number.isSafeInteger(durationSeconds) || durationSeconds <= 0) {
+    let durationSeconds = extractDurationSeconds(await videoPageResponse.text());
+    if (!durationSeconds) {
+      const embedResponse = await fetch(`https://www.youtube.com/embed/${resolvedVideoId}`, requestOptions);
+      if (embedResponse.ok) {
+        durationSeconds = extractDurationSeconds(await embedResponse.text());
+      }
+    }
+    if (!durationSeconds) {
       throw new Error('YouTube did not provide a valid video duration. Check that the video is public and try again.');
     }
 

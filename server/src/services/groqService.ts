@@ -242,7 +242,7 @@ Respond ONLY with a valid JSON object strictly matching this schema:
     const courseId = `course_${Date.now()}`;
     const titleLower = videoInfo.title.toLowerCase();
 
-    let category: 'DevOps' | 'Programming' | 'AI & Machine Learning' | 'Cloud Computing' | 'Web Development' = 'DevOps';
+    let category: ICourse['category'] = 'General';
     if (titleLower.includes('ai') || titleLower.includes('neural') || titleLower.includes('machine learning') || titleLower.includes('llm') || titleLower.includes('deep learning')) {
       category = 'AI & Machine Learning';
     } else if (titleLower.includes('react') || titleLower.includes('css') || titleLower.includes('html') || titleLower.includes('full stack') || titleLower.includes('nextjs') || titleLower.includes('web')) {
@@ -251,6 +251,8 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       category = 'Cloud Computing';
     } else if (titleLower.includes('python') || titleLower.includes('rust') || titleLower.includes('golang') || titleLower.includes('java') || titleLower.includes('c++') || titleLower.includes('code')) {
       category = 'Programming';
+    } else if (/\b(devops|docker|kubernetes|container|terraform|ci\/cd|linux|infrastructure as code)\b/i.test(videoInfo.title)) {
+      category = 'DevOps';
     }
 
     let difficulty: 'Beginner' | 'Intermediate' | 'Advanced' = 'Intermediate';
@@ -377,10 +379,27 @@ Respond ONLY with a valid JSON object strictly matching this schema:
           modDesc: 'Multi-AZ disaster recovery, object storage tiering, and low-latency databases.',
           lessons: ['S3 Lifecycle Policies & Envelope Encryption', 'Relational vs Distributed NoSQL Datastores', 'Route 53 DNS Failover & Global Latency Routing']
         }
+      ],
+      General: [
+        {
+          modTitle: `Module 1: Introduction to ${videoInfo.title}`,
+          modDesc: `Build a foundation in the main ideas covered by ${videoInfo.title}.`,
+          lessons: [`Overview of ${videoInfo.title}`, `Core Concepts in ${videoInfo.title}`, `Key Terminology for ${videoInfo.title}`]
+        },
+        {
+          modTitle: `Module 2: Understanding ${videoInfo.title}`,
+          modDesc: `Explore how the main concepts connect and where they are used.`,
+          lessons: [`How ${videoInfo.title} Works`, `Examples and Applications of ${videoInfo.title}`, `Common Challenges in ${videoInfo.title}`]
+        },
+        {
+          modTitle: `Module 3: Applying What You Learned`,
+          modDesc: `Review the main takeaways and apply them to practical situations.`,
+          lessons: [`Practical Approaches to ${videoInfo.title}`, `Best Practices for ${videoInfo.title}`, `Review and Next Steps`]
+        }
       ]
     };
 
-    const blueprint = curriculumBlueprints[category] || curriculumBlueprints['DevOps'];
+    const blueprint = curriculumBlueprints[category] || curriculumBlueprints.General;
     
     let totalLessonCount = 0;
     blueprint.forEach(m => totalLessonCount += m.lessons.length);

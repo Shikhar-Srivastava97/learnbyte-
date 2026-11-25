@@ -132,10 +132,11 @@ export class YouTubeService {
       devops: ['Docker daemon', 'Kubernetes pod', 'etcd cluster', 'systemd unit', 'cgroups limits', 'Prometheus scrape', 'Terraform state lock', 'ingress controller', 'SIGTERM signal', 'CI/CD pipeline'],
       ml: ['backpropagation gradient', 'loss function convergence', 'matrix multiplication', 'PyTorch tensor', 'attention weights', 'activation layer', 'Nemotron 70B inference', 'learning rate schedule'],
       web: ['React component state', 'TypeScript generics', 'HTTP/2 socket connection', 'server-side hydration', 'DOM mutation observer', 'Vite build bundling'],
-      cloud: ['AWS VPC subnet', 'S3 bucket policy', 'DynamoDB partition key', 'IAM role assumption', 'Route 53 DNS record', 'Load Balancer health check']
+      cloud: ['AWS VPC subnet', 'S3 bucket policy', 'DynamoDB partition key', 'IAM role assumption', 'Route 53 DNS record', 'Load Balancer health check'],
+      general: [videoTitle, 'core concepts', 'key ideas', 'practical examples', 'real-world applications', 'common challenges']
     };
 
-    let domain = 'devops';
+    let domain = 'general';
     const lower = videoTitle.toLowerCase();
     if (lower.includes('ai') || lower.includes('neural') || lower.includes('model') || lower.includes('learning')) {
       domain = 'ml';
@@ -143,6 +144,8 @@ export class YouTubeService {
       domain = 'web';
     } else if (lower.includes('aws') || lower.includes('cloud') || lower.includes('azure')) {
       domain = 'cloud';
+    } else if (/\b(devops|docker|kubernetes|container|terraform|ci\/cd|linux|infrastructure as code)\b/i.test(videoTitle)) {
+      domain = 'devops';
     }
 
     const domainWords = keywordsByDomain[domain];

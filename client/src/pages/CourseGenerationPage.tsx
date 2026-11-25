@@ -28,7 +28,7 @@ export const CourseGenerationPage: React.FC = () => {
 
   const [stages, setStages] = useState<Stage[]>([
     { id: 1, label: 'FETCHING VIDEO INFORMATION', desc: 'Validating stream URL & retrieving author, title, and video duration', status: 'pending' },
-    { id: 2, label: 'EXTRACTING TRANSCRIPT', desc: 'Extracting audio captions and structuring millisecond timestamps', status: 'pending' },
+    { id: 2, label: 'PREPARING VIDEO SEGMENTS', desc: 'Preparing timestamped study segments across the full video runtime', status: 'pending' },
     { id: 3, label: 'UNDERSTANDING TOPICS', desc: 'NVIDIA Nemotron analyzing conceptual hierarchies and domain boundaries', status: 'pending' },
     { id: 4, label: 'STRUCTURING CURRICULUM', desc: 'Synthesizing pedagogical modules, learning objectives, and progression flow', status: 'pending' },
     { id: 5, label: 'GENERATING LESSONS', desc: 'Constructing bite-sized lessons, timestamp seek anchors, and quiz bank', status: 'pending' }
@@ -65,9 +65,9 @@ export const CourseGenerationPage: React.FC = () => {
       updateStage(1, 'completed');
 
       updateStage(2, 'in_progress');
-      addLog('Extracting timestamped caption tracks...');
+      addLog('Preparing timestamped study segments for the full video...');
       await new Promise(r => setTimeout(r, 800));
-      addLog(`✓ Synchronized ${Math.floor(validation.metadata.durationSeconds / 30)} transcript segments.`);
+      addLog(`✓ Prepared ${Math.ceil(validation.metadata.durationSeconds / 30)} timestamped segments.`);
       updateStage(2, 'completed');
 
       updateStage(3, 'in_progress');

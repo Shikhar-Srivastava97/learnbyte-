@@ -89,12 +89,18 @@ export class YouTubeService {
       console.warn('oEmbed fetch error, using generated metadata:', err);
     }
 
-    let durationSeconds = 3600 * 4 + 1800; 
-    const lowerTitle = title.toLowerCase();
-    if (lowerTitle.includes('bootcamp') || lowerTitle.includes('full course') || lowerTitle.includes('complete course') || lowerTitle.includes('devops')) {
-      durationSeconds = 3600 * 8 + 1500; 
-    } else if (lowerTitle.includes('masterclass') || lowerTitle.includes('hours') || lowerTitle.includes('guide')) {
-      durationSeconds = 3600 * 5 + 2400;
+    const videoPageResponse = await fetch(effectiveUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    if (!videoPageResponse.ok) {
+      throw new Error(`Could not retrieve YouTube video details (HTTP ${videoPageResponse.status}).`);
+    }
+
+    const videoPage = await videoPageResponse.text();
+    const durationMatch = videoPage.match(/"lengthSeconds"\s*:\s*"?(\d+)"?/);
+    const durationSeconds = durationMatch ? Number(durationMatch[1]) : 0;
+    if (!Number.isSafeInteger(durationSeconds) || durationSeconds <= 0) {
+      throw new Error('YouTube did not provide a valid video duration. Check that the video is public and try again.');
     }
 
     const hours = Math.floor(durationSeconds / 3600);
@@ -119,7 +125,7 @@ export class YouTubeService {
 
     const segments: ITranscriptSegment[] = [];
     const stepDuration = 30; 
-    const totalSegments = Math.min(60, Math.floor(totalDurationSeconds / stepDuration));
+    const totalSegments = Math.ceil(totalDurationSeconds / stepDuration);
 
     const technicalVerbs = [
       'In this section, we examine how', 'Notice that when we inspect the',
@@ -160,7 +166,7 @@ export class YouTubeService {
 
       segments.push({
         start,
-        duration: stepDuration,
+        duration: Math.min(stepDuration, totalDurationSeconds - start),
         text
       });
     }

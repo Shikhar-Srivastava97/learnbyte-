@@ -1,5 +1,6 @@
 import { ICourse, IModule, ILesson, IQuiz, IQuizQuestion, IStudyPlan } from '../models/types.js';
 import { YouTubeVideoInfo } from './youtubeService.js';
+import { makeLessonsBiteSized } from './lessonChunker.js';
 
 export interface NemotronCourseGenerationResult {
   course: ICourse;
@@ -112,7 +113,7 @@ Here is a sample of the video transcript:
 ${transcriptText.substring(0, 3500)}
 """
 
-Transform this video into a structured, highly professional online course resembling Udemy/Coursera.
+Transform this video into a structured, highly professional online course resembling Udemy/Coursera. Cover the full runtime in chronological order, with contiguous timestamps from 0 through ${videoInfo.durationSeconds} seconds and no gaps. Keep each lesson between 5 and 15 minutes; create enough lessons to cover the entire video.
 Respond ONLY with a valid JSON object strictly matching this schema:
 {
   "title": "Clear, professional course title",
@@ -214,7 +215,7 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       difficulty = 'Advanced';
     }
 
-    const totalSecs = Math.max(1800, videoInfo.durationSeconds);
+    const totalSecs = Math.max(1, videoInfo.durationSeconds);
     const { modules, quizzes } = this.generateModulesForCategory(category, videoInfo, totalSecs, courseId);
 
     const learningObjectives = [
@@ -239,7 +240,7 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       difficulty,
       tags: [category, 'Nemotron-AI', 'Hands-On', 'Comprehensive'],
       learningObjectives,
-      modules,
+      modules: makeLessonsBiteSized(modules, courseId, videoInfo.durationSeconds),
       generatorModel: this.defaultModel,
       isDemo: true,
       isUserPasted: true,
@@ -351,11 +352,31 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       ]
     };
 
-    const blueprint = curriculumBlueprints[category] || curriculumBlueprints.General;
-    
-    let totalLessonCount = 0;
-    blueprint.forEach(m => totalLessonCount += m.lessons.length);
-    const lessonDuration = Math.floor(totalSeconds / totalLessonCount);
+    const sourceBlueprint = curriculumBlueprints[category] || curriculumBlueprints.General;
+    const topicList = sourceBlueprint.flatMap(module => module.lessons.map(title => ({
+      title,
+      moduleTitle: module.modTitle.replace(/^Module \d+:\s*/, ''),
+      moduleDescription: module.modDesc
+    })));
+    const lessonCount = Math.ceil(totalSeconds / (15 * 60));
+    const blueprint: typeof sourceBlueprint = [];
+
+    for (let lessonIndex = 0; lessonIndex < lessonCount; lessonIndex++) {
+      const topic = topicList[lessonIndex % topicList.length];
+      const moduleIndex = Math.floor(lessonIndex / 4);
+      if (!blueprint[moduleIndex]) {
+        blueprint[moduleIndex] = {
+          modTitle: `Module ${moduleIndex + 1}: ${topic.moduleTitle}`,
+          modDesc: topic.moduleDescription,
+          lessons: []
+        };
+      }
+
+      const part = Math.floor(lessonIndex / topicList.length) + 1;
+      blueprint[moduleIndex].lessons.push(part === 1 ? topic.title : `${topic.title} - Part ${part}`);
+    }
+
+    const lessonDuration = 15 * 60;
 
     const modules: IModule[] = [];
     const quizzes: IQuiz[] = [];

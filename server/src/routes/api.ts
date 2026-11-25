@@ -103,7 +103,10 @@ apiRouter.post('/courses/generate', async (req: Request, res: Response) => {
     );
     console.log(`✓ Extracted transcript with ${transcript.segments.length} timestamped segments.`);
 
-    const isGroqActive = groqService.getStatus().active;
+    const configuredProvider = process.env.AI_PROVIDER?.toLowerCase();
+    const isGroqActive = configuredProvider
+      ? configuredProvider === 'groq'
+      : groqService.getStatus().active;
     const aiResult = isGroqActive
       ? await groqService.generateCourseFromTranscript(videoMetadata, transcript.rawText)
       : await nemotronService.generateCourseFromTranscript(videoMetadata, transcript.rawText);

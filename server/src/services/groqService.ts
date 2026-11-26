@@ -12,10 +12,12 @@ export class GroqService {
   }
 
   private initClient() {
-    const apiKey = process.env.GROQ_API_KEY || process.env.AI_API_KEY;
-    if (apiKey && apiKey.trim().length > 5) {
+    const configuredProvider = process.env.AI_PROVIDER?.toLowerCase();
+    const isGroqExplicit = configuredProvider === 'groq';
+    const rawApiKey = process.env.GROQ_API_KEY || (process.env.AI_API_KEY?.startsWith('gsk_') ? process.env.AI_API_KEY : (isGroqExplicit ? process.env.AI_API_KEY : undefined));
+    if (rawApiKey && rawApiKey.trim().length > 5) {
       try {
-        this.groqClient = new Groq({ apiKey: apiKey.trim() });
+        this.groqClient = new Groq({ apiKey: rawApiKey.trim() });
         console.log('⚡ Groq SDK initialized successfully with Llama 3.3 70B.');
       } catch (e) {
         console.warn('Could not initialize Groq client:', e);
@@ -34,9 +36,11 @@ export class GroqService {
   public getStatus() {
     if (!this.groqClient) this.initClient();
     const hasKey = !!this.groqClient;
-    const key = process.env.GROQ_API_KEY || process.env.AI_API_KEY || '';
+    const configuredProvider = process.env.AI_PROVIDER?.toLowerCase();
+    const isGroqActive = configuredProvider ? configuredProvider === 'groq' && hasKey : hasKey;
+    const key = process.env.GROQ_API_KEY || (process.env.AI_API_KEY?.startsWith('gsk_') ? process.env.AI_API_KEY : '');
     return {
-      active: hasKey,
+      active: isGroqActive,
       provider: 'Groq Cloud LPU',
       model: this.defaultModel,
       maskedKey: key.length > 8 ? `${key.substring(0, 6)}...${key.substring(key.length - 4)}` : null

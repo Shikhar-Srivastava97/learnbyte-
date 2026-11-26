@@ -33,7 +33,7 @@ export class NemotronService {
     if (trimmed.startsWith('gsk_')) {
       this.apiEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
       this.defaultModel = 'llama-3.3-70b-versatile';
-    } else if (trimmed.startsWith('AIzaSy')) {
+    } else if (trimmed.startsWith('AIzaSy') || trimmed.startsWith('AQ.')) {
       this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
       this.defaultModel = 'gemini-1.5-flash';
     } else if (trimmed.startsWith('sk-or-')) {
@@ -564,7 +564,7 @@ Respond ONLY with a valid JSON object strictly matching this schema:
       difficulty: parsed.difficulty || 'Intermediate',
       tags: parsed.tags || ['AI-Generated', 'Hands-On'],
       learningObjectives: parsed.learningObjectives || [],
-      modules,
+      modules: makeLessonsBiteSized(modules, courseId, videoInfo.durationSeconds),
       generatorModel: this.defaultModel,
       isDemo: false,
       isUserPasted: true,

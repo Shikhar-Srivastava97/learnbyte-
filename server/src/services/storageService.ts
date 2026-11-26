@@ -29,7 +29,6 @@ class StorageService {
   }
 
   private seedDefaultData() {
-
     this.users.set(sampleUser._id, { 
       ...sampleUser,
       studyStreak: 1,
@@ -38,10 +37,32 @@ class StorageService {
     });
 
     this.courses = new Map();
+    const defaultCourses = [
+      sampleDevOpsCourse,
+      sampleAIMLCourse,
+      sampleWebDevCourse,
+      sampleCloudCourse,
+      sampleProgrammingCourse
+    ];
+    for (const c of defaultCourses) {
+      this.courses.set(c._id, c);
+    }
+
     this.quizzes = new Map();
+    for (const q of sampleQuizzes) {
+      this.quizzes.set(q._id, q);
+    }
+
     this.notes = new Map();
+    for (const n of sampleNotes) {
+      this.notes.set(n._id, n);
+    }
+
     this.progress = new Map();
     this.studyPlans = new Map();
+    if (sampleStudyPlan) {
+      this.studyPlans.set(sampleStudyPlan.userId, sampleStudyPlan);
+    }
   }
 
   public async init(mongoUri?: string): Promise<boolean> {

@@ -490,8 +490,9 @@ apiRouter.get('/dashboard', async (_req: Request, res: Response) => {
 });
 
 apiRouter.get('/settings/ai', (_req: Request, res: Response) => {
+  const configuredProvider = process.env.AI_PROVIDER?.toLowerCase();
   const groqStatus = groqService.getStatus();
-  if (groqStatus.active) {
+  if ((!configuredProvider || configuredProvider === 'groq') && groqStatus.active) {
     return res.json({
       hasKey: true,
       maskedKey: groqStatus.maskedKey,

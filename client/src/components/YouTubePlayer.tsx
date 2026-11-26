@@ -60,13 +60,22 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   };
 
   useEffect(() => {
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+    if (!window.YT || !window.YT.Player) {
+      if (!document.getElementById('yt-iframe-api-script')) {
+        const tag = document.createElement('script');
+        tag.id = 'yt-iframe-api-script';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      }
 
+      const prevCallback = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => {
+        if (typeof prevCallback === 'function') {
+          try {
+            prevCallback();
+          } catch (e) {}
+        }
         setIsApiReady(true);
       };
     } else {
@@ -75,7 +84,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!isApiReady || !containerRef.current) return;
+    if (!isApiReady || !containerRef.current || !window.YT || !window.YT.Player) return;
 
     if (playerRef.current && playerRef.current.destroy) {
       try {

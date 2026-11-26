@@ -39,6 +39,26 @@ function extractDurationSeconds(videoPage: string): number | null {
   return null;
 }
 
+function extractDurationFromTitle(title: string): number | null {
+  const hoursMatch = title.match(/(\d+(?:\.\d+)?)\s*(?:hours|hour|hrs|hr|h)\b/i);
+  if (hoursMatch) {
+    const hours = parseFloat(hoursMatch[1]);
+    if (hours > 0 && hours <= 100) {
+      return Math.round(hours * 3600);
+    }
+  }
+
+  const minsMatch = title.match(/(\d+)\s*(?:minutes|minute|mins|min|m)\b/i);
+  if (minsMatch) {
+    const mins = parseInt(minsMatch[1], 10);
+    if (mins > 0 && mins <= 600) {
+      return mins * 60;
+    }
+  }
+
+  return null;
+}
+
 export interface YouTubeVideoInfo {
   videoId: string;
   isPlaylist: boolean;
@@ -130,8 +150,9 @@ export class YouTubeService {
 
     const requestOptions = {
       headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cookie': 'SOCS=CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjMwODI5LjA3X3AwGgJlbiACGgYIgLCnpgY; CONSENT=PENDING+999; YES+cb'
       }
     };
 
@@ -157,14 +178,20 @@ export class YouTubeService {
     }
 
     if (!durationSeconds || durationSeconds <= 0) {
-      console.warn('YouTube did not return a valid video duration directly. Using estimated duration fallback.');
-      const lowerTitle = title.toLowerCase();
-      if (lowerTitle.includes('bootcamp') || lowerTitle.includes('full course') || lowerTitle.includes('complete course') || lowerTitle.includes('devops')) {
-        durationSeconds = 3600 * 8 + 1500;
-      } else if (lowerTitle.includes('masterclass') || lowerTitle.includes('hours') || lowerTitle.includes('guide')) {
-        durationSeconds = 3600 * 5 + 2400;
+      const fromTitle = extractDurationFromTitle(title);
+      if (fromTitle) {
+        console.log(`✓ Detected ${Math.round(fromTitle / 3600)}h duration from video title.`);
+        durationSeconds = fromTitle;
       } else {
-        durationSeconds = 3600 * 2; // Default 2 hours
+        console.warn('YouTube did not return a valid video duration directly. Using estimated duration fallback.');
+        const lowerTitle = title.toLowerCase();
+        if (lowerTitle.includes('bootcamp') || lowerTitle.includes('full course') || lowerTitle.includes('complete course') || lowerTitle.includes('devops')) {
+          durationSeconds = 3600 * 8 + 1500;
+        } else if (lowerTitle.includes('masterclass') || lowerTitle.includes('hours') || lowerTitle.includes('guide')) {
+          durationSeconds = 3600 * 5 + 2400;
+        } else {
+          durationSeconds = 3600 * 2; // Default 2 hours
+        }
       }
     }
 
